@@ -79,25 +79,50 @@ int make_image(char* out, image_t* img)
     return 0;
 }//end of make_image
 
+int affine(double scaler, int theta, image_t* img_in, image_t* img_out)
+{
+    int i,j;
+
+    sprintf(img_out->magic,"%s",img_in->magic);
+    img_out->row=(int)img_in->row*scaler;
+    img_out->column=(int)img_in->column*scaler;
+    img_out->max=img_in->max;
+
+    img_out->array=malloc(3*sizeof(unsigned char**));
+    for(i=0;i<3;i++){
+        img_out->array[i]=malloc(img_out->column*sizeof(unsigned char*));
+        for(j=0;j<(img_out->column);j++){
+            img_out->array[i][j]=malloc(img_out->row*sizeof(unsigned char));
+        }
+    }
+    for(i=0;i<img_out->column;i++){
+        for(j=0;j<img_out->row;j++){
+            img_out->array[0][i][j]=img_in->array[0][(int)(i/scaler)][(int)(j/scaler)];
+            img_out->array[1][i][j]=img_in->array[1][(int)(i/scaler)][(int)(j/scaler)];
+            img_out->array[2][i][j]=img_in->array[2][(int)(i/scaler)][(int)(j/scaler)];
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
     int i;
-    image_t img;
+    image_t img_in,img_out;
 
-    if(argc<3){
-        fprintf(stderr,"引数が足りません、入力ファイルと出力ファイルは必須です.\n");
+    if(argc<5){
+        fprintf(stderr,"引数が足りません、入力ファイル \
+出力ファイル 拡大率 回転角 の順で実行してください.\n");
         exit(1);
     }
     
-    read_image(argv[1],&img);
-    printf("hoge\n");
-    printf("%d\n",img.row);
-    printf("%s\n",img.magic);
-    for(i=0;i<10;i++)
-        printf("%d\n",img.array[0][0][i]);
-        printf("%d\n",img.array[1][0][i]);
-        printf("%d\n",img.array[2][0][i]);
-    make_image(argv[2],&img);
+    read_image(argv[1],&img_in);
+    affine(atof(argv[3]),atoi(argv[4]),&img_in,&img_out);
+    printf("%d\n",img_out.row);
+    make_image(argv[2],&img_out);
 
+
+    free(img_in.array);
     return 0;
 }
