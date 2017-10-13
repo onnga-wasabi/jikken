@@ -82,21 +82,25 @@ int make_image(char* out, image_t* img)
 int affine(double scaler, int theta, image_t* img_in, image_t* img_out)
 {
     int i,j;
+    double out_row,out_column;
 
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=(int)img_in->row*scaler;
     img_out->column=(int)img_in->column*scaler;
     img_out->max=img_in->max;
 
+    out_row=img_out->row*cos(theta)+img_out->column*sin(theta);
+    out_column=img_out->column*cos(theta)+img_out->row*sin(theta);
+
     img_out->array=malloc(3*sizeof(unsigned char**));
     for(i=0;i<3;i++){
-        img_out->array[i]=malloc(img_out->column*sizeof(unsigned char*));
-        for(j=0;j<(img_out->column);j++){
-            img_out->array[i][j]=malloc(img_out->row*sizeof(unsigned char));
+        img_out->array[i]=malloc(out_column*sizeof(unsigned char*));
+        for(j=0;j<out_column;j++){
+            img_out->array[i][j]=malloc(out_row*sizeof(unsigned char));
         }
     }
-    for(i=0;i<img_out->column;i++){
-        for(j=0;j<img_out->row;j++){
+    for(i=0;i<out_column;i++){
+        for(j=0;j<out_row;j++){
             img_out->array[0][i][j]=img_in->array[0][(int)(i/scaler)][(int)(j/scaler)];
             img_out->array[1][i][j]=img_in->array[1][(int)(i/scaler)][(int)(j/scaler)];
             img_out->array[2][i][j]=img_in->array[2][(int)(i/scaler)][(int)(j/scaler)];
