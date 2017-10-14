@@ -54,53 +54,6 @@ int read_image(char* input, image_t* img)
 
 }//end of read_image
 
-int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
-{
-    int i,j;
-    int out_row,out_column;
-    double sn,cs;
-    double rad;
-    int nx,ny;//new coordinates
-    
-    rad=(theta/180)*M_PI;
-    sn=sin(rad);
-    cs=cos(rad);
-
-    out_row=abs(img_in->row*cs+img_in->column*sn);
-    out_column=abs(img_in->column*cs+img_in->row*sn);
-
-    sprintf(img_out->magic,"%s",img_in->magic);
-    img_out->row=out_row;
-    img_out->column=out_column;
-    img_out->max=img_in->max;
-
-    img_out->array=malloc(3*sizeof(unsigned char**));
-    for(i=0;i<3;i++){
-        img_out->array[i]=malloc(img_out->column*sizeof(unsigned char*));
-        for(j=0;j<img_out->column;j++){
-            img_out->array[i][j]=malloc(img_out->row*sizeof(unsigned char));
-        }
-    }
-
-    for(i=-img_out->column/2;i<img_out->column/2;i++){
-        for(j=-img_out->row/2;j<img_out->row/2;j++){
-            printf("hoge\n");
-
-            nx=j*cs-i*sn+img_out->row/2;
-            ny=j*sn+i*cs+img_out->column/2;
-
-            img_out->array[0][i+img_out->column/2][j+img_out->row/2]=img_in->array[0][ny][nx];
-            img_out->array[1][i+img_out->column/2][j+img_out->row/2]=img_in->array[1][ny][nx];
-            img_out->array[2][i+img_out->column/2][j+img_out->row/2]=img_in->array[2][ny][nx];
-        }
-    }
-
-    printf("%d\n",img_out->column);
-    printf("%d\n",img_out->row);
-
-    return 0;
-}//end of affine
-
 int make_image(char* out, image_t* img)
 {
     int i,j;
@@ -127,6 +80,41 @@ int make_image(char* out, image_t* img)
 
 }//end of make_image
 
+int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
+{
+    int i,j;
+    int out_row,out_column;
+    
+    sprintf(img_out->magic,"%s",img_in->magic);
+    img_out->row=(int)img_in->row*scaler;
+    img_out->column=(int)img_in->column*scaler;
+    img_out->max=img_in->max;
+
+    out_row=(int)(img_out->row*cos(theta)+img_out->column*sin(theta));
+    out_column=(int)(img_out->column*cos(theta)+img_out->row*sin(theta));
+
+    img_out->row=out_row;
+    img_out->column=out_column;
+
+    img_out->array=malloc(3*sizeof(unsigned char**));
+    for(i=0;i<3;i++){
+        img_out->array[i]=malloc(out_column*sizeof(unsigned char*));
+        for(j=0;j<out_column;j++){
+            img_out->array[i][j]=malloc(out_row*sizeof(unsigned char));
+        }
+    }
+
+    for(i=0;i<out_column;i++){
+        for(j=0;j<out_row;j++){
+            img_out->array[0][i][j]=img_in->array[0][(int)(i/scaler)][(int)(j/scaler)];
+            img_out->array[1][i][j]=img_in->array[1][(int)(i/scaler)][(int)(j/scaler)];
+            img_out->array[2][i][j]=img_in->array[2][(int)(i/scaler)][(int)(j/scaler)];
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
     int i;
@@ -140,9 +128,9 @@ int main(int argc, char** argv)
     
     read_image(argv[1],&img_in);
     affine(atof(argv[3]),atof(argv[4]),&img_in,&img_out);
+    printf("%d\n",img_out.row);
     make_image(argv[2],&img_out);
 
     free(img_in.array);
     return 0;
-}//end of main
-
+}
