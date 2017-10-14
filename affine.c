@@ -59,15 +59,19 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
     int i,j;
     int out_row,out_column;
     double sn,cs;
-    double rad;
-    int nx,ny;//new coordinates
+    int ix,iy;
     
-    rad=(theta/180)*M_PI;
-    sn=sin(rad);
-    cs=cos(rad);
+    sn=sin((theta/180)*M_PI);
+    cs=cos((theta/180)*M_PI);
 
-    out_row=abs(img_in->row*cs+img_in->column*sn);
-    out_column=abs(img_in->column*cs+img_in->row*sn);
+    if((theta>=0 && theta<=90) || (theta>=180 && theta<=270)){
+        out_row=abs(img_in->row*cs)+abs(img_in->column*sn);
+        out_column=abs(img_in->column*cs)+abs(img_in->row*sn);
+    }
+    else{
+        out_row=abs(img_in->column*cs)+abs(img_in->row*sn);
+        out_column=abs(img_in->row*cs)+abs(img_in->column*sn);
+    }
 
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=out_row;
@@ -84,19 +88,27 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 
     for(i=-img_out->column/2;i<img_out->column/2;i++){
         for(j=-img_out->row/2;j<img_out->row/2;j++){
-            printf("hoge\n");
 
-            nx=j*cs-i*sn+img_out->row/2;
-            ny=j*sn+i*cs+img_out->column/2;
+            ix=(j*cs-i*sn+img_in->row/2);
+            iy=(j*sn+i*cs+img_in->column/2);
+            printf("%d\n",ix);
+            printf("%d\n",iy);
 
-            img_out->array[0][i+img_out->column/2][j+img_out->row/2]=img_in->array[0][ny][nx];
-            img_out->array[1][i+img_out->column/2][j+img_out->row/2]=img_in->array[1][ny][nx];
-            img_out->array[2][i+img_out->column/2][j+img_out->row/2]=img_in->array[2][ny][nx];
+            if(ix>=0 && iy>=0 && ix<img_in->row && iy<img_in->column){
+                img_out->array[0][i+img_out->column/2][j+img_out->row/2]=img_in->array[0][iy][ix];
+                img_out->array[1][i+img_out->column/2][j+img_out->row/2]=img_in->array[1][iy][ix];
+                img_out->array[2][i+img_out->column/2][j+img_out->row/2]=img_in->array[2][iy][ix];
+            }
+            else{
+                img_out->array[0][i+img_out->column/2][j+img_out->row/2]=150;
+                img_out->array[1][i+img_out->column/2][j+img_out->row/2]=150;
+                img_out->array[2][i+img_out->column/2][j+img_out->row/2]=150;
+            }
         }
     }
 
-    printf("%d\n",img_out->column);
     printf("%d\n",img_out->row);
+    printf("%d\n",img_out->column);
 
     return 0;
 }//end of affine
