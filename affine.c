@@ -77,20 +77,21 @@ int make_image(char* out, image_t* img)
         }
     }
     return 0;
+
 }//end of make_image
 
-int affine(double scaler, int theta, image_t* img_in, image_t* img_out)
+int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 {
     int i,j;
-    double out_row,out_column;
-
+    int out_row,out_column;
+    
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=(int)img_in->row*scaler;
     img_out->column=(int)img_in->column*scaler;
     img_out->max=img_in->max;
 
-    out_row=img_out->row*cos(theta)+img_out->column*sin(theta);
-    out_column=img_out->column*cos(theta)+img_out->row*sin(theta);
+    out_row=(int)(img_out->row*cos(theta)+img_out->column*sin(theta));
+    out_column=(int)(img_out->column*cos(theta)+img_out->row*sin(theta));
 
     img_out->array=malloc(3*sizeof(unsigned char**));
     for(i=0;i<3;i++){
@@ -99,6 +100,12 @@ int affine(double scaler, int theta, image_t* img_in, image_t* img_out)
             img_out->array[i][j]=malloc(out_row*sizeof(unsigned char));
         }
     }
+
+
+
+
+
+
     for(i=0;i<out_column;i++){
         for(j=0;j<out_row;j++){
             img_out->array[0][i][j]=img_in->array[0][(int)(i/scaler)][(int)(j/scaler)];
@@ -122,10 +129,9 @@ int main(int argc, char** argv)
     }
     
     read_image(argv[1],&img_in);
-    affine(atof(argv[3]),atoi(argv[4]),&img_in,&img_out);
+    affine(atof(argv[3]),atof(argv[4]),&img_in,&img_out);
     printf("%d\n",img_out.row);
     make_image(argv[2],&img_out);
-
 
     free(img_in.array);
     return 0;
