@@ -56,11 +56,12 @@ int read_image(char* input, image_t* img)
 
 int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 {
-    int i,j;
+    int i,j,k;
     int in_row,in_column;
     int out_row,out_column;
     double sn,cs;
-    int ix,iy;
+    double ix,iy;
+    int nx,ny;
 
     in_row=img_in->row;
     in_column=img_in->column;
@@ -102,10 +103,22 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
             ix+=in_row/2;
             iy+=in_column/2;
 
-            if(ix>=0 && iy>=0 && ix<in_row && iy<in_column){
-                img_out->array[0][i+img_out->column/2][j+img_out->row/2]=img_in->array[0][iy][ix];
-                img_out->array[1][i+img_out->column/2][j+img_out->row/2]=img_in->array[1][iy][ix];
-                img_out->array[2][i+img_out->column/2][j+img_out->row/2]=img_in->array[2][iy][ix];
+            nx=(int)ix;
+            ny=(int)iy;
+
+            ix=ix-nx;
+            iy=iy-ny;
+
+            //printf("%f\n",ix-nx);
+
+            if(nx>=0 && ny>=0 && nx+1<in_row && ny+1<in_column){
+                for(k=0;k<3;k++){
+                    img_out->array[k][i+img_out->column/2][j+img_out->row/2]=\
+                    img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
+                    img_in->array[k][ny][nx+1]*ix*(1-iy)+\
+                    img_in->array[k][ny+1][nx]*(1-ix)*iy+\
+                    img_in->array[k][ny+1][nx+1]*ix*iy;
+                }
             }
             else{
                 img_out->array[0][i+img_out->column/2][j+img_out->row/2]=150;
