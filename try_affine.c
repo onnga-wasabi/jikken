@@ -87,6 +87,7 @@ int affine(float scaler, int theta, image_t* img_in, image_t* img_out)
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=(int)img_in->row*scaler;
     img_out->column=(int)img_in->column*scaler;
+
     return 0;
 }
 
@@ -102,6 +103,7 @@ int main(int argc, char** argv)
     
     read_image(argv[1],&img_in);
     //make_image(argv[2],&img);
+    affine(2.4,30,&img_in,&img_out);
     free(img_in.array);
 
     return 0;
