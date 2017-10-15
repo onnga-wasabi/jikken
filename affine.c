@@ -57,21 +57,28 @@ int read_image(char* input, image_t* img)
 int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 {
     int i,j;
+    int in_row,in_column;
     int out_row,out_column;
     double sn,cs;
     int ix,iy;
+
+    in_row=img_in->row;
+    in_column=img_in->column;
     
     sn=sin((theta/180)*M_PI);
     cs=cos((theta/180)*M_PI);
 
     if((theta>=0 && theta<=90) || (theta>=180 && theta<=270)){
-        out_row=abs(img_in->row*cs)+abs(img_in->column*sn);
-        out_column=abs(img_in->column*cs)+abs(img_in->row*sn);
+        out_row=abs(in_row*cs)+abs(in_column*sn);
+        out_column=abs(in_column*cs)+abs(in_row*sn);
     }
     else{
-        out_row=abs(img_in->column*cs)+abs(img_in->row*sn);
-        out_column=abs(img_in->row*cs)+abs(img_in->column*sn);
+        out_row=abs(in_column*cs)+abs(in_row*sn);
+        out_column=abs(in_row*cs)+abs(in_column*sn);
     }
+    
+    out_row*=scaler;
+    out_column*=scaler;
 
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=out_row;
@@ -89,12 +96,13 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
     for(i=-img_out->column/2;i<img_out->column/2;i++){
         for(j=-img_out->row/2;j<img_out->row/2;j++){
 
-            ix=(j*cs-i*sn+img_in->row/2);
-            iy=(j*sn+i*cs+img_in->column/2);
-            printf("%d\n",ix);
-            printf("%d\n",iy);
+            ix=(j*cs-i*sn)/scaler;
+            iy=(j*sn+i*cs)/scaler;
 
-            if(ix>=0 && iy>=0 && ix<img_in->row && iy<img_in->column){
+            ix+=in_row/2;
+            iy+=in_column/2;
+
+            if(ix>=0 && iy>=0 && ix<in_row && iy<in_column){
                 img_out->array[0][i+img_out->column/2][j+img_out->row/2]=img_in->array[0][iy][ix];
                 img_out->array[1][i+img_out->column/2][j+img_out->row/2]=img_in->array[1][iy][ix];
                 img_out->array[2][i+img_out->column/2][j+img_out->row/2]=img_in->array[2][iy][ix];
@@ -106,7 +114,6 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
             }
         }
     }
-
     printf("%d\n",img_out->row);
     printf("%d\n",img_out->column);
 
