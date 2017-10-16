@@ -34,7 +34,7 @@ int read_image(char* input, image_t* img)
         if(i==2)
             img->max=atoi(strtok(buffer," "));
     } 
-    //memory array
+    //memoryの動的確保
     img->array=malloc(3*sizeof(unsigned char**));
     for(i=0;i<3;i++){
         img->array[i]=malloc(img->column*sizeof(unsigned char*));
@@ -42,6 +42,7 @@ int read_image(char* input, image_t* img)
             img->array[i][j]=malloc(img->row*sizeof(unsigned char));
         }
     }
+    //読み込み
     for(j=0;j<(img->column);j++){
         for(k=0;k<(img->row);k++){
             fread(&(img->array[0][j][k]),sizeof(unsigned char),1,fp);
@@ -56,19 +57,20 @@ int read_image(char* input, image_t* img)
 
 int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 {
-    int i,j,k;
-    int in_row,in_column;
-    int out_row,out_column;
-    double sn,cs;
-    double ix,iy;
-    int nx,ny;
-
-    in_row=img_in->row;
-    in_column=img_in->column;
-    
+    int i,j,k;//for
+    double sn,cs;//sin,cos
     sn=sin((theta/180)*M_PI);
     cs=cos((theta/180)*M_PI);
 
+    int in_row,in_column;//入力画像のサイズ
+    in_row=img_in->row;
+    in_column=img_in->column;
+
+    int out_row,out_column;//出力画像のサイズ
+    double ix,iy;//出力画像の画素から計算した元画像の座標
+    int nx,ny;//出力画像の画素から計算した元画像の座標
+
+    //出力画像のサイズを計算
     if((theta>=0 && theta<=90) || (theta>=180 && theta<=270)){
         out_row=abs(in_row*cs)+abs(in_column*sn);
         out_column=abs(in_column*cs)+abs(in_row*sn);
@@ -77,58 +79,66 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
         out_row=abs(in_column*cs)+abs(in_row*sn);
         out_column=abs(in_row*cs)+abs(in_column*sn);
     }
-    
     out_row*=scaler;
     out_column*=scaler;
 
+    //メモリの動的確保
+    img_out->array=malloc(3*sizeof(unsigned char**));
+    for(i=0;i<3;i++){
+        img_out->array[i]=malloc(out_column*sizeof(unsigned char*));
+        for(j=0;j<out_column;j++){
+            img_out->array[i][j]=malloc(out_row*sizeof(unsigned char));
+        }
+    }
+    printf("%d\n",(int)round(2.5));
+
+    //画像の中心を軸にして回転させるため,画像サイズの半分ずらす
+    for(i=-out_column/2;i<out_column/2;i++){
+        for(j=-out_row/2;j<out_row/2;j++){
+
+            //回転後の座標を計算
+            //拡大率でわると元画像が内接する長方形のサイズになる
+            ix=(j*cs-i*sn)/scaler;
+            iy=(j*sn+i*cs)/scaler;
+
+            //画像の中心が元画像の中心と同じになるように元画像の半分戻す
+            ix+=in_row/2;
+            iy+=in_column/2;
+            
+            //倍精度をint型にキャスト
+            nx=ix;
+            ny=iy;
+
+            //ix,iyはバイリニア補間の重みになる
+            ix=ix-nx;
+            iy=iy-ny;
+
+            (int)ix>0 && printf("error\n");
+
+
+            if(nx>=0 && ny>=0 && nx<in_row-1 && ny<in_column-1){
+                for(k=0;k<3;k++){
+                    img_out->array[k][i+out_column/2][j+out_row/2]=(int)round(\
+                    (double)img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
+                    (double)img_in->array[k][ny][nx+1]*ix*(1-iy)+\
+                    (double)img_in->array[k][ny+1][nx]*(1-ix)*iy+\
+                    (double)img_in->array[k][ny+1][nx+1]*ix*iy);
+                }
+            }
+            //元画像が値を持っていない（元画像の外側を参照しているとき）
+            else{
+                img_out->array[0][i+out_column/2][j+out_row/2]=150;
+                img_out->array[1][i+out_column/2][j+out_row/2]=150;
+                img_out->array[2][i+out_column/2][j+out_row/2]=150;
+            }
+        }
+    }
+
+    //header部分
     sprintf(img_out->magic,"%s",img_in->magic);
     img_out->row=out_row;
     img_out->column=out_column;
     img_out->max=img_in->max;
-
-    img_out->array=malloc(3*sizeof(unsigned char**));
-    for(i=0;i<3;i++){
-        img_out->array[i]=malloc(img_out->column*sizeof(unsigned char*));
-        for(j=0;j<img_out->column;j++){
-            img_out->array[i][j]=malloc(img_out->row*sizeof(unsigned char));
-        }
-    }
-
-    for(i=-img_out->column/2;i<img_out->column/2;i++){
-        for(j=-img_out->row/2;j<img_out->row/2;j++){
-
-            ix=(j*cs-i*sn)/scaler;
-            iy=(j*sn+i*cs)/scaler;
-
-            ix+=in_row/2;
-            iy+=in_column/2;
-
-            nx=(int)ix;
-            ny=(int)iy;
-
-            ix=ix-nx;
-            iy=iy-ny;
-
-            //printf("%f\n",ix-nx);
-
-            if(nx>=0 && ny>=0 && nx+1<in_row && ny+1<in_column){
-                for(k=0;k<3;k++){
-                    img_out->array[k][i+img_out->column/2][j+img_out->row/2]=\
-                    img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
-                    img_in->array[k][ny][nx+1]*ix*(1-iy)+\
-                    img_in->array[k][ny+1][nx]*(1-ix)*iy+\
-                    img_in->array[k][ny+1][nx+1]*ix*iy;
-                }
-            }
-            else{
-                img_out->array[0][i+img_out->column/2][j+img_out->row/2]=150;
-                img_out->array[1][i+img_out->column/2][j+img_out->row/2]=150;
-                img_out->array[2][i+img_out->column/2][j+img_out->row/2]=150;
-            }
-        }
-    }
-    printf("%d\n",img_out->row);
-    printf("%d\n",img_out->column);
 
     return 0;
 }//end of affine
@@ -165,7 +175,7 @@ int main(int argc, char** argv)
     image_t img_in,img_out;
 
     if(argc<5){
-        fprintf(stderr,"引数が足りません、入力ファイル \
+        fprintf(stderr,"引数が足りません,入力ファイル \
 出力ファイル 拡大率 回転角 の順で実行してください.\n");
         exit(1);
     }
