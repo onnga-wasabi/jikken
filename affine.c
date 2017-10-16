@@ -118,7 +118,7 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 
             if(nx>=0 && ny>=0 && nx<in_row-1 && ny<in_column-1){
                 for(k=0;k<3;k++){
-                    img_out->array[k][i+out_column/2][j+out_row/2]=(int)round(\
+                    img_out->array[k][i+out_column/2][j+out_row/2]=(int)(\
                     (double)img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
                     (double)img_in->array[k][ny][nx+1]*ix*(1-iy)+\
                     (double)img_in->array[k][ny+1][nx]*(1-ix)*iy+\
