@@ -54,6 +54,85 @@ int read_image(char* input, image_t* img)
 
 }//end of read_image
 
+int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
+{
+    int i,j,k;
+    int in_row,in_column;
+    int out_row,out_column;
+    double sn,cs;
+    double ix,iy;
+    int nx,ny;
+
+    in_row=img_in->row;
+    in_column=img_in->column;
+    
+    sn=sin((theta/180)*M_PI);
+    cs=cos((theta/180)*M_PI);
+
+    if((theta>=0 && theta<=90) || (theta>=180 && theta<=270)){
+        out_row=abs(in_row*cs)+abs(in_column*sn);
+        out_column=abs(in_column*cs)+abs(in_row*sn);
+    }
+    else{
+        out_row=abs(in_column*cs)+abs(in_row*sn);
+        out_column=abs(in_row*cs)+abs(in_column*sn);
+    }
+    
+    out_row*=scaler;
+    out_column*=scaler;
+
+    sprintf(img_out->magic,"%s",img_in->magic);
+    img_out->row=out_row;
+    img_out->column=out_column;
+    img_out->max=img_in->max;
+
+    img_out->array=malloc(3*sizeof(unsigned char**));
+    for(i=0;i<3;i++){
+        img_out->array[i]=malloc(img_out->column*sizeof(unsigned char*));
+        for(j=0;j<img_out->column;j++){
+            img_out->array[i][j]=malloc(img_out->row*sizeof(unsigned char));
+        }
+    }
+
+    for(i=-img_out->column/2;i<img_out->column/2;i++){
+        for(j=-img_out->row/2;j<img_out->row/2;j++){
+
+            ix=(j*cs-i*sn)/scaler;
+            iy=(j*sn+i*cs)/scaler;
+
+            ix+=in_row/2;
+            iy+=in_column/2;
+
+            nx=(int)ix;
+            ny=(int)iy;
+
+            ix=ix-nx;
+            iy=iy-ny;
+
+            //printf("%f\n",ix-nx);
+
+            if(nx>=0 && ny>=0 && nx+1<in_row && ny+1<in_column){
+                for(k=0;k<3;k++){
+                    img_out->array[k][i+img_out->column/2][j+img_out->row/2]=\
+                    img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
+                    img_in->array[k][ny][nx+1]*ix*(1-iy)+\
+                    img_in->array[k][ny+1][nx]*(1-ix)*iy+\
+                    img_in->array[k][ny+1][nx+1]*ix*iy;
+                }
+            }
+            else{
+                img_out->array[0][i+img_out->column/2][j+img_out->row/2]=150;
+                img_out->array[1][i+img_out->column/2][j+img_out->row/2]=150;
+                img_out->array[2][i+img_out->column/2][j+img_out->row/2]=150;
+            }
+        }
+    }
+    printf("%d\n",img_out->row);
+    printf("%d\n",img_out->column);
+
+    return 0;
+}//end of affine
+
 int make_image(char* out, image_t* img)
 {
     int i,j;
@@ -77,27 +156,25 @@ int make_image(char* out, image_t* img)
         }
     }
     return 0;
+
 }//end of make_image
 
 int main(int argc, char** argv)
 {
     int i;
-    image_t img;
+    image_t img_in,img_out;
 
-    if(argc<3){
-        fprintf(stderr,"引数が足りません、入力ファイルと出力ファイルは必須です.\n");
+    if(argc<5){
+        fprintf(stderr,"引数が足りません、入力ファイル \
+出力ファイル 拡大率 回転角 の順で実行してください.\n");
         exit(1);
     }
     
-    read_image(argv[1],&img);
-    printf("hoge\n");
-    printf("%d\n",img.row);
-    printf("%s\n",img.magic);
-    for(i=0;i<10;i++)
-        printf("%d\n",img.array[0][0][i]);
-        printf("%d\n",img.array[1][0][i]);
-        printf("%d\n",img.array[2][0][i]);
-    make_image(argv[2],&img);
+    read_image(argv[1],&img_in);
+    affine(atof(argv[3]),atof(argv[4]),&img_in,&img_out);
+    make_image(argv[2],&img_out);
 
+    free(img_in.array);
     return 0;
-}
+}//end of main
+
