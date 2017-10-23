@@ -1,3 +1,4 @@
 *.ppm
+*.png
 /nearest
 /image_process
