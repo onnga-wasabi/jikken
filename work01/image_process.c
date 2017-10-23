@@ -164,18 +164,7 @@ int make_image(char* out, image_t* img)
     }
     return 0;
 
-<<<<<<< HEAD:try_affine.c
-int affine(float scaler, int theta, image_t* img_in, image_t* img_out)
-{
-    sprintf(img_out->magic,"%s",img_in->magic);
-    img_out->row=(int)img_in->row*scaler;
-    img_out->column=(int)img_in->column*scaler;
-
-    return 0;
-}
-=======
 }//end of make_image
->>>>>>> 370a48eb3156a7ef0aaa522dbff4896e90022d8e:affine.c.org
 
 int main(int argc, char** argv)
 {
@@ -189,14 +178,8 @@ int main(int argc, char** argv)
     }
     
     read_image(argv[1],&img_in);
-<<<<<<< HEAD:try_affine.c
-    //make_image(argv[2],&img);
-    affine(2.4,30,&img_in,&img_out);
-    free(img_in.array);
-=======
     affine(atof(argv[3]),atof(argv[4]),&img_in,&img_out);
     make_image(argv[2],&img_out);
->>>>>>> 370a48eb3156a7ef0aaa522dbff4896e90022d8e:affine.c.org
 
     free(img_in.array);
     return 0;
