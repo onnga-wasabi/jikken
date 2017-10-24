@@ -179,9 +179,10 @@ int main(int argc, char** argv)
     
     read_image(argv[1],&img_in);
     affine(atof(argv[3]),atof(argv[4]),&img_in,&img_out);
-    make_image(argv[2],&img_out);
-
     free(img_in.array);
+    make_image(argv[2],&img_out);
+    free(img_out.array);
+
     return 0;
 }//end of main
 
