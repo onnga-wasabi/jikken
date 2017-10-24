@@ -2,3 +2,4 @@
 *.png
 /nearest
 /image_process
+.DS_Store
