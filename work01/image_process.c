@@ -100,7 +100,8 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
             ix=(j*cs-i*sn)/scaler;
             iy=(j*sn+i*cs)/scaler;
 
-            //画像の中心が元画像の中心と同じになるように元画像の半分戻す
+            //画像の中心が元画像の中心と
+            //同じになるように元画像の半分戻す
             ix+=in_row/2;
             iy+=in_column/2;
             
@@ -115,7 +116,8 @@ int affine(double scaler, double theta, image_t* img_in, image_t* img_out)
 
             if(nx>=0 && ny>=0 && nx<in_row-1 && ny<in_column-1){
                 for(k=0;k<3;k++){
-                    img_out->array[k][i+out_column/2][j+out_row/2]=(int)(\
+                    img_out->array[k]\
+                        [i+out_column/2][j+out_row/2]=(int)(\
                     (double)img_in->array[k][ny][nx]*(1-ix)*(1-iy)+\
                     (double)img_in->array[k][ny][nx+1]*ix*(1-iy)+\
                     (double)img_in->array[k][ny+1][nx]*(1-ix)*iy+\
