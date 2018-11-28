@@ -1,0 +1,5 @@
+*.ppm
+*.png
+/nearest
+/work01/image_process
+.DS_Store
